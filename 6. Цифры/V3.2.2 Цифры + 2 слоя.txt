@@ -1,0 +1,160 @@
+from PIL import Image
+import numpy as np
+
+h1_ney = 64
+h2_ney = 64
+
+a1, a2, a3, W1, W2, W3 = [], [], [], [], [], []
+
+for k in range(h2_ney):
+    a3.append(0.2)
+for k in range(h1_ney):
+    a2.append(0.2)
+for k in range(784):
+    a1.append(0.2)
+
+for k in range(10):
+    W3.append(a3.copy())
+for k in range(h2_ney):
+    W2.append(a2.copy())
+for k in range(h1_ney):
+    W1.append(a1.copy())
+
+W1 = np.array(W1)
+W2 = np.array(W2)
+W3 = np.array(W3)
+
+
+def softmax(sum3):
+    sum3 = sum3 - np.max(sum3)
+    exp = np.exp(sum3)
+    sum_exp = np.sum(exp)
+    itog = exp / sum_exp
+    return itog
+
+
+def act(x):
+    return 1 / (1 + np.exp(-x))
+
+def dact(x):
+    return act(x) * (1 - act(x))
+
+
+def go(inp):
+    global W1, W2, W3
+    sum = np.dot(W1, inp)
+    out = np.array([act(x) for x in sum])
+
+    sum2 = np.dot(W2, out)
+    out2 = np.array([act(x) for x in sum2])
+
+    sum3 = np.dot(W3, out2)
+    out3 = softmax(sum3)
+    return (sum, sum2, sum3, out, out2, out3)
+
+
+def train(epoch):
+    global W1, W2, W3
+    cr, ch = 0, 0
+    lmd = 0.01
+    N = 10000
+    count = len(epoch)
+    for k in range(N + 1):
+        x = epoch[np.random.randint(0, count)]
+        sum, sum2, sum3, out, out2, out3 = go(x[0:784])
+
+        j = np.argmax(x[-10:])
+
+        if k % 10 == 0:
+            ch += 1
+            loss = -1 * np.log(out3[j] + 1e-90)
+            cr += loss
+        if k % 1000 == 0:
+            print("Средняя ошибка на", k, "/", N, "=", cr/ch)
+
+        delta = out3 - x[-10:]
+
+        for c in range(h2_ney):
+            W3[0][c] -= lmd * delta[0] * out2[c]
+        for c in range(h2_ney):
+            W3[1][c] -= lmd * delta[1] * out2[c]
+        for c in range(h2_ney):
+            W3[2][c] -= lmd * delta[2] * out2[c]
+        for c in range(h2_ney):
+            W3[3][c] -= lmd * delta[3] * out2[c]
+        for c in range(h2_ney):
+            W3[4][c] -= lmd * delta[4] * out2[c]
+        for c in range(h2_ney):
+            W3[5][c] -= lmd * delta[5] * out2[c]
+        for c in range(h2_ney):
+            W3[6][c] -= lmd * delta[6] * out2[c]
+        for c in range(h2_ney):
+            W3[7][c] -= lmd * delta[7] * out2[c]
+        for c in range(h2_ney):
+            W3[8][c] -= lmd * delta[8] * out2[c]
+        for c in range(h2_ney):
+            W3[9][c] -= lmd * delta[9] * out2[c]
+
+        sig1 = []
+        for c in range(h2_ney):
+            sig1.append(delta[0] * W3[0][c] + delta[1] * W3[1][c] + delta[2] * W3[2][c] + delta[3] * W3[3][c] + delta[4] * W3[4][c] + delta[5] * W3[5][c] + delta[6] * W3[6][c] + delta[7] * W3[7][c] + delta[8] * W3[8][c] + delta[9] * W3[9][c])
+        delta1 = []
+        for c in range(h2_ney):
+            delta1.append(sig1[c]*dact(sum2[c]))
+        for c in range(h2_ney):
+            W2[c, :] -= out * delta1[c] * lmd
+
+        sig2 = []
+        for c in range(h1_ney):
+            s = 0
+            for i in range(h2_ney):
+                s += delta1[i] * W2[i][c]
+            sig2.append(s)
+        delta2 = []
+        for c in range(h1_ney):
+            delta2.append(sig2[c]*dact(sum[c]))
+        x_in = np.array(x[0:784])
+        for c in range(h1_ney):
+            W1[c, :] -= x_in * delta2[c] * lmd
+
+
+l0 = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+l1 = [0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+l2 = [0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
+l3 = [0, 0, 0, 1, 0, 0, 0, 0, 0, 0]
+l4 = [0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
+l5 = [0, 0, 0, 0, 0, 1, 0, 0, 0, 0]
+l6 = [0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+l7 = [0, 0, 0, 0, 0, 0, 0, 1, 0, 0]
+l8 = [0, 0, 0, 0, 0, 0, 0, 0, 1, 0]
+l9 = [0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+l = np.array([l0, l1, l2, l3, l4, l5, l6, l7, l8, l9])
+r = []
+for j1 in range(10):
+    for i1 in range(1, 31):
+        s = "chy/" + str(j1) + "_" + str(i1) + ".png"
+        img = Image.open(s)
+        img_ar = np.array(img)
+        img_ar = (255 - img_ar) / 255
+        rr = []
+        for j in img_ar:
+            for i in j:
+                rr.append(i[0])
+        rr.extend(l[j1])
+        rr = np.array(rr)
+        r.append(rr)
+r = np.array(r)
+train(r)
+
+
+tt = Image.open("chy/1_3.png")
+tt_ar = np.array(tt)
+tt_ar = (255-tt_ar)/255
+ttt = []
+for j in tt_ar:
+    for i in j:
+        ttt.append(i[0])
+sum, sum2, sum3, out, out2, out3 = go(ttt[0:784])
+print("Число изображений =", len(r))
+print("Загадано число = 1")
+print(out3)

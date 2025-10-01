@@ -1,0 +1,147 @@
+from PIL import Image
+import numpy as np
+
+h_ney = 128
+
+a1, a2, W1, W2 = [], [], [], []
+
+for k in range(h_ney):
+    a2.append(0.2)
+for k in range(784):
+    a1.append(0.2)
+
+for k in range(10):
+    W2.append(a2.copy())
+for k in range(h_ney):
+    W1.append(a1.copy())
+
+W1 = np.array(W1)
+W2 = np.array(W2)
+
+
+def softmax(sum2):
+    sum2 = sum2 - np.max(sum2)
+    exp = np.exp(sum2)
+    sum_exp = np.sum(exp)
+    itog = exp / sum_exp
+    return itog
+
+
+def act(x):
+    return 1 / (1 + np.exp(-x))
+
+def dact(x):
+    a = 1 / (1 + np.exp(-x))
+    return a * (1 - a)
+
+
+def go(inp):
+    global W1, W2
+    sum = np.dot(W1, inp)
+    out = np.array([act(x) for x in sum])
+
+    sum2 = np.dot(W2, out)
+    out2 = softmax(sum2)
+    return (sum, sum2, out, out2)
+
+
+def train(epoch):
+    global W1, W2
+    lmd = 0.01
+    N = 10000
+    count = len(epoch)
+    for k in range(N + 1):
+        x = epoch[np.random.randint(0, count)]
+        sum, sum2, out, out2 = go(x[0:784])
+
+        j = np.argmax(x[-10:])
+
+        if k % 1000 == 0:
+            loss = -1 * np.log(out2[j] + 1e-90)
+            print(loss)
+
+        delta = out2 - x[-10:]
+
+        for c in range(h_ney):
+            W2[0][c] -= lmd * delta[0] * out[c]
+        for c in range(h_ney):
+            W2[1][c] -= lmd * delta[1] * out[c]
+        for c in range(h_ney):
+            W2[2][c] -= lmd * delta[2] * out[c]
+        for c in range(h_ney):
+            W2[3][c] -= lmd * delta[3] * out[c]
+        for c in range(h_ney):
+            W2[4][c] -= lmd * delta[4] * out[c]
+        for c in range(h_ney):
+            W2[5][c] -= lmd * delta[5] * out[c]
+        for c in range(h_ney):
+            W2[6][c] -= lmd * delta[6] * out[c]
+        for c in range(h_ney):
+            W2[7][c] -= lmd * delta[7] * out[c]
+        for c in range(h_ney):
+            W2[8][c] -= lmd * delta[8] * out[c]
+        for c in range(h_ney):
+            W2[9][c] -= lmd * delta[9] * out[c]
+
+        sig = []
+        for c in range(h_ney):
+            sig.append(delta[0] * W2[0][c] + delta[1] * W2[1][c] + delta[2] * W2[2][c] + delta[3] * W2[3][c] + delta[4] * W2[4][c] + delta[5] * W2[5][c] + delta[6] * W2[6][c] + delta[7] * W2[7][c] + delta[8] * W2[8][c] + delta[9] * W2[9][c])
+        delta2 = []
+        for c in range(h_ney):
+            delta2.append(sig[c]*dact(sum[c]))
+        x_in = np.array(x[0:784])
+        for c in range(h_ney):
+            W1[c, :] -= x_in * delta2[c] * lmd
+
+
+l0 = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+l1 = [0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+l2 = [0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
+l3 = [0, 0, 0, 1, 0, 0, 0, 0, 0, 0]
+l4 = [0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
+l5 = [0, 0, 0, 0, 0, 1, 0, 0, 0, 0]
+l6 = [0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+l7 = [0, 0, 0, 0, 0, 0, 0, 1, 0, 0]
+l8 = [0, 0, 0, 0, 0, 0, 0, 0, 1, 0]
+l9 = [0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+l = np.array([l0, l1, l2, l3, l4, l5, l6, l7, l8, l9])
+r = []
+for j1 in range(10):
+    for i1 in range(1, 11):
+        s = "chy/" + str(j1) + "_" + str(i1) + ".png"
+        img = Image.open(s)
+        img_ar = np.array(img)
+        img_ar = (255 - img_ar) / 255
+        rr = []
+        for j in img_ar:
+            for i in j:
+                rr.append(i[0])
+        rr.extend(l[j1])
+        rr = np.array(rr)
+        r.append(rr)
+for j1 in range(5):
+    for i1 in range(11, 21):
+        s = "chy/" + str(j1) + "_" + str(i1) + ".png"
+        img = Image.open(s)
+        img_ar = np.array(img)
+        img_ar = (255 - img_ar) / 255
+        rr = []
+        for j in img_ar:
+            for i in j:
+                rr.append(i[0])
+        rr.extend(l[j1])
+        rr = np.array(rr)
+        r.append(rr)
+r = np.array(r)
+train(r)
+
+
+tt = Image.open("chy/0_3.png")
+tt_ar = np.array(tt)
+tt_ar = (255-tt_ar)/255
+ttt = []
+for j in tt_ar:
+    for i in j:
+        ttt.append(i[0])
+sum, sum2, out, out2 = go(ttt[0:784])
+print(out2)
