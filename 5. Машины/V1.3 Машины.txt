@@ -1,0 +1,52 @@
+import numpy as np
+
+W1 = np.array([[0, 0, 0, 1, 0, -1], [0, -1, 0, 1, 0, 0], [0, 0, 0, 0.4, 0, 0.4], [0, -1, 1, 0, 0, 0], [0.4, 0, 0, 0, 0.4, 0], [0, -1, 0, 1, 0, -1], [0.2, -1, 0.2, 0.2, 0.2, -1], [0, 1, 0, 0, -1, -1], [0.4, 0.4, 0, 0, 0, 0]])
+W2 = np.array([[0.5, 0.6, 0.4, 0.5, 0.3, 0.6, 0.4, 0.4, 0.5], [0.4, 0.5, 0.5, 0.6, 0.6, 0.4, 0.6, 0.2, 0.5], [0.1, 0.1, 0.1, 0, 0.1, 0, 0, 0.3, 0.8]])
+
+def act(x):
+    if x >= 0.8: return 1
+    else: return 0
+
+def softmax(sum2):
+    sum2 = sum2 - np.max(sum2)
+    exp = np.exp(sum2)
+    sum_exp = np.sum(exp)
+    itog = exp / sum_exp
+    return itog
+
+def go(inp):
+    global W1, W2
+    x = inp
+
+    sum = np.dot(W1, x)
+    out = np.array([act(x) for x in sum])
+
+    sum2 = np.dot(W2, out)
+    # print(sum2)
+    out2 = softmax(sum2)
+    return out2
+
+for _ in range(100):
+    r = input()
+    r = list(map(int, r.split()))
+    out2 = go(r)
+    for i in range(len(out2[:])):
+        out2[i] = round(out2[i]*100, 2)
+    print("БМВ -", out2[0], "%")
+    print("Тайота -", out2[1], "%")
+    print("Тесла -", out2[2], "%")
+
+    print()
+
+    i = max(out2)
+    for j in range(len(out2[:])):
+        if out2[j] == i:
+            b = j
+            break
+    if b == 0:
+        print("Это БМВ")
+    elif b == 1:
+        print("Это Тайота")
+    elif b == 2:
+        print("Это Тесла")
+

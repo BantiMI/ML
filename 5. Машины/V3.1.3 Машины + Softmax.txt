@@ -1,0 +1,124 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+a1 = [0.5, 0.2, 0.3, 0.2, 0.4, 0.2]
+a2 = [0.2, 0.1, 0.2, 0.2, 0.8, 0.2, 0.4, 0.2, 0.6]
+
+W1 = []
+W2 = []
+for i in range(9):
+    W1.append(a1)
+for i in range(3):
+    W2.append(a2)
+
+W1 = np.array(W1)
+W2 = np.array(W2)
+
+losses = []
+
+def softmax(out2):
+    out2 = out2 - np.max(out2)
+    exp = np.exp(out2)
+    sum_exp = np.sum(exp)
+    itog = exp / sum_exp
+    return itog
+
+def act(x):
+    return (1 / (1 + np.exp(-x)))
+
+def dact(x):
+    return (act(x)*(1-act(x)))
+
+def go(inp):
+    global W1, W2
+    sum = np.dot(W1, inp)
+    out = np.array([act(x) for x in sum])
+
+    sum2 = np.dot(W2, out)
+    out2 = softmax(sum2)
+    return (sum, sum2, out, out2)
+
+def train(epoch):
+    global W1, W2
+    lmd = 0.01
+    N = 1000000
+    count = len(epoch)
+    for k in range(N+1):
+        x = epoch[np.random.randint(0, count)]
+        sum, sum2, out, out2 = go(x[0:6])
+
+        j = x[-3:].index(1)
+
+        loss = -1 * np.log(out2[j])
+        if k % 100 == 0:
+            losses.append(loss)
+
+        if k % 50000 == 0:
+            print(loss)
+
+        delta = out2 - x[-3:]
+        # print(x, out, delta)
+
+        for c in range(9):
+            W2[0][c] -= lmd * delta[0] * out[c]
+
+        for c in range(9):
+            W2[1][c] -= lmd * delta[1] * out[c]
+
+        for c in range(9):
+            W2[2][c] -= lmd * delta[2] * out[c]
+
+        sig = []
+
+        for c in range(9):
+            sig.append(delta[0] * W2[0][c] + delta[1] * W2[1][c] + delta[2] * W2[2][c])
+
+        delta2 = []
+
+        for c in range(9):
+            delta2.append(sig[c] * dact(sum[c]))
+
+        x_in = np.array(x[0:6])
+
+        for c in range(9):
+            W1[c, :] -= x_in * delta2[c] * lmd
+
+
+ff = open("V2.3 Машины Файл.txt")
+epoch = []
+for s in ff:
+    epoch.append(list(map(int, s.split())))
+train(epoch)
+
+plt.plot(losses)
+plt.xlabel("Итерация")
+plt.ylabel("Loss (ошибка)")
+plt.title("График ошибки обучения")
+plt.grid(True)
+plt.show()
+
+for _ in range(100):
+    r = input()
+    r = list(map(int, r.split()))
+    sum, sum2, put, out2 = go(r)
+    print(out2)
+    for i in range(len(out2[:])):
+        out2[i] = round(out2[i]*100, 3)
+    print("БМВ -", out2[0], "%")
+    print("Тайота -", out2[1], "%")
+    print("Тесла -", out2[2], "%")
+
+    print()
+
+    i = max(out2)
+    for j in range(len(out2[:])):
+        if out2[j] == i:
+            b = j
+            break
+    if b == 0:
+        print("Это БМВ")
+    elif b == 1:
+        print("Это Тайота")
+    elif b == 2:
+        print("Это Тесла")

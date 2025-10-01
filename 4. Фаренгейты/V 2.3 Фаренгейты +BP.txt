@@ -1,0 +1,35 @@
+import numpy as np
+
+W1 = np.array([0.5, 0.5])
+
+def go(x):
+    sum = x*W1[0] + W1[1]
+    return sum
+
+
+def train(epoch):
+    global W1
+    lmd = 0.001
+    N = 20000
+    count = len(epoch)
+    for k in range(N+1):
+        x = epoch[np.random.randint(0, count)]
+        y = go(x[0])
+        e = y - x[1]
+        W1[0] = W1[0] - lmd * e * x[0]
+        W1[1] = W1[1] - lmd * e * 1
+        if k % 1000 == 0:
+            loss = (y - x[-1]) ** 2
+            print("Ошибка = ", loss)
+
+ff = open("V 2.3 Фаренгейты +BP файл.txt")
+epoch = []
+for s in ff:
+    epoch.append(list(map(float, s.replace(",", ".").split())))
+train(epoch)
+r = ""
+while r != "1":
+    r = input()
+    rr = list(map(float, r.split()))
+    y = go(rr[0])
+    print(y, round(y, 1))
